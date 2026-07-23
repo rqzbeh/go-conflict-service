@@ -1,0 +1,7 @@
+conflictd
+frontend/node_modules
+frontend/tsconfig.tsbuildinfo
+conflict-ui*.png
+.env
+*.env
+

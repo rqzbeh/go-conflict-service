@@ -1,0 +1,11 @@
+{
+  "name": "سامانه تشخیص مغایرت بخشنامه‌ها",
+  "short_name": "مغایرت بخشنامه",
+  "start_url": "/",
+  "display": "standalone",
+  "dir": "rtl",
+  "lang": "fa",
+  "background_color": "#f4f1ea",
+  "theme_color": "#163832",
+  "icons": []
+}

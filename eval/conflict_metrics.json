@@ -1,0 +1,62 @@
+{
+  "correct": 7,
+  "expected": 7,
+  "f1": 1,
+  "false_negative": 0,
+  "false_positive": 0,
+  "precision": 1,
+  "predicted": 7,
+  "recall": 1,
+  "scenarios": [
+    {
+      "name": "pdf_supervisory_over_internal",
+      "expected": 1,
+      "found": 1,
+      "pass": true
+    },
+    {
+      "name": "pdf_newer_ceiling_change",
+      "expected": 1,
+      "found": 1,
+      "pass": true
+    },
+    {
+      "name": "pdf_newer_same_level_threshold_months",
+      "expected": 1,
+      "found": 1,
+      "pass": true
+    },
+    {
+      "name": "pdf_same_date_different_units_needs_review",
+      "expected": 1,
+      "found": 1,
+      "pass": true
+    },
+    {
+      "name": "pdf_partial_supersession_amendment",
+      "expected": 1,
+      "found": 1,
+      "pass": true
+    },
+    {
+      "name": "explicit_supersession_bx_style",
+      "expected": 1,
+      "found": 1,
+      "pass": true
+    },
+    {
+      "name": "archive_hidden_high_risk_exception_vs_prohibition",
+      "expected": 1,
+      "found": 1,
+      "pass": true
+    },
+    {
+      "name": "compatible_overlap_not_conflict",
+      "expected": 0,
+      "found": 0,
+      "absent_ok": true,
+      "pass": true
+    }
+  ],
+  "true_positive": 7
+}

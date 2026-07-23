@@ -1,0 +1,226 @@
+[
+  {
+    "name": "pdf_supervisory_over_internal",
+    "circulars": [
+      {
+        "id": "GT-SUP",
+        "title": "ممنوعیت دسته‌چک برای ریسک زیاد",
+        "text": "بند 1) مشتریان با سطح ریسک زیاد از دریافت دسته‌چک محروم هستند.",
+        "circular_type": "supervisory",
+        "issue_date": "1403/01/01",
+        "topic": "دسته‌چک",
+        "issuer_unit": "بانک مرکزی"
+      },
+      {
+        "id": "GT-INT",
+        "title": "مجوز دسته‌چک برای ریسک زیاد",
+        "text": "بند 1) مشتریان با سطح ریسک زیاد مجاز به دریافت دسته‌چک هستند.",
+        "circular_type": "internal",
+        "issue_date": "1404/01/01",
+        "topic": "دسته‌چک",
+        "issuer_unit": "اداره اعتبارات"
+      }
+    ],
+    "expected": [
+      {
+        "source_clause_id": "GT-INT#1",
+        "target_clause_id": "GT-SUP#1",
+        "relationship_type": "full_contradiction",
+        "winning_clause_id": "GT-SUP#1",
+        "resolver_status": "resolved"
+      }
+    ]
+  },
+  {
+    "name": "pdf_newer_ceiling_change",
+    "circulars": [
+      {
+        "id": "GT-CEIL-OLD",
+        "title": "سقف قدیمی تسهیلات",
+        "text": "بند 1) سقف تسهیلات مصرفی برای مشتریان عادی حداکثر پانصد میلیون ریال است.",
+        "circular_type": "internal",
+        "issue_date": "1403/01/01",
+        "topic": "تسهیلات",
+        "issuer_unit": "اداره اعتبارات"
+      },
+      {
+        "id": "GT-CEIL-NEW",
+        "title": "سقف جدید تسهیلات",
+        "text": "بند 1) سقف تسهیلات مصرفی برای مشتریان عادی حداکثر یک میلیارد ریال است.",
+        "circular_type": "internal",
+        "issue_date": "1404/01/01",
+        "topic": "تسهیلات",
+        "issuer_unit": "اداره اعتبارات"
+      }
+    ],
+    "expected": [
+      {
+        "source_clause_id": "GT-CEIL-NEW#1",
+        "target_clause_id": "GT-CEIL-OLD#1",
+        "relationship_type": "partial_contradiction",
+        "winning_clause_id": "GT-CEIL-NEW#1",
+        "resolver_status": "resolved"
+      }
+    ]
+  },
+  {
+    "name": "pdf_newer_same_level_threshold_months",
+    "circulars": [
+      {
+        "id": "GT-OLD",
+        "title": "شرایط دسته‌چک",
+        "text": "بند 1) دسته‌چک به مشتریانی قابل ارائه است که حداقل ۶ ماه از تاریخ افتتاح حساب گذشته باشد.",
+        "circular_type": "internal",
+        "issue_date": "1403/01/01",
+        "topic": "دسته‌چک"
+      },
+      {
+        "id": "GT-NEW",
+        "title": "اصلاح شرایط دسته‌چک",
+        "text": "بند 1) دسته‌چک به مشتریانی قابل ارائه است که حداقل ۳ ماه از تاریخ افتتاح حساب گذشته باشد.",
+        "circular_type": "internal",
+        "issue_date": "1404/01/01",
+        "topic": "دسته‌چک"
+      }
+    ],
+    "expected": [
+      {
+        "source_clause_id": "GT-NEW#1",
+        "target_clause_id": "GT-OLD#1",
+        "relationship_type": "partial_contradiction",
+        "winning_clause_id": "GT-NEW#1",
+        "resolver_status": "resolved"
+      }
+    ]
+  },
+  {
+    "name": "pdf_same_date_different_units_needs_review",
+    "circulars": [
+      {
+        "id": "GT-UNIT-A",
+        "title": "شرایط دسته‌چک واحد اعتبارات",
+        "text": "بند 1) برای صدور دسته‌چک حداقل ۶ ماه سابقه حساب الزامی است.",
+        "circular_type": "internal",
+        "issue_date": "1403/05/01",
+        "topic": "دسته‌چک",
+        "issuer_unit": "اداره اعتبارات"
+      },
+      {
+        "id": "GT-UNIT-B",
+        "title": "شرایط دسته‌چک واحد حقوقی",
+        "text": "بند 1) برای صدور دسته‌چک حداقل ۳ ماه سابقه حساب الزامی است.",
+        "circular_type": "internal",
+        "issue_date": "1403/05/01",
+        "topic": "دسته‌چک",
+        "issuer_unit": "واحد حقوقی"
+      }
+    ],
+    "expected": [
+      {
+        "source_clause_id": "GT-UNIT-B#1",
+        "target_clause_id": "GT-UNIT-A#1",
+        "relationship_type": "partial_contradiction",
+        "winning_clause_id": "",
+        "resolver_status": "needs_review"
+      }
+    ]
+  },
+  {
+    "name": "pdf_partial_supersession_amendment",
+    "circulars": [
+      {
+        "id": "GT-BASE",
+        "title": "شرایط کارت اعتباری",
+        "text": "بند 1) کارت اعتباری با حداقل درآمد ۲۰ میلیون تومان قابل ارائه است.\nبند 2) سقف کارت ۵۰ میلیون تومان است.",
+        "circular_type": "internal",
+        "issue_date": "1403/01/01",
+        "topic": "کارت اعتباری"
+      },
+      {
+        "id": "GT-PART",
+        "title": "اصلاح جزئی سقف کارت",
+        "text": "بند 1) بند 2 بخشنامه GT-BASE اصلاح می‌شود و سقف کارت به ۸۰ میلیون تومان افزایش می‌یابد.",
+        "circular_type": "internal",
+        "issue_date": "1404/01/01",
+        "topic": "کارت اعتباری"
+      }
+    ],
+    "expected": [
+      {
+        "source_clause_id": "GT-PART#1",
+        "target_clause_id": "GT-BASE#2",
+        "relationship_type": "supersession",
+        "winning_clause_id": "GT-PART#1",
+        "resolver_status": "resolved"
+      }
+    ]
+  },
+  {
+    "name": "explicit_supersession_bx_style",
+    "circulars": [
+      {
+        "id": "BX-3000",
+        "title": "شرایط دسته‌چک",
+        "text": "بند 1) دسته‌چک به مشتریانی قابل ارائه است که حداقل ۶ ماه سابقه داشته باشند.",
+        "circular_type": "internal",
+        "issue_date": "1403/01/01",
+        "topic": "دسته‌چک"
+      },
+      {
+        "id": "BX-3001",
+        "title": "اصلاح BX-3000",
+        "text": "بند 1) بند 1 بخشنامه BX-3000 لغو و با شرط حداقل ۳ ماه سابقه جایگزین می‌شود.",
+        "circular_type": "internal",
+        "issue_date": "1404/01/01",
+        "topic": "دسته‌چک"
+      }
+    ],
+    "expected": [
+      {
+        "source_clause_id": "BX-3001#1",
+        "target_clause_id": "BX-3000#1",
+        "relationship_type": "supersession",
+        "winning_clause_id": "BX-3001#1",
+        "resolver_status": "resolved"
+      }
+    ]
+  },
+  {
+    "name": "archive_hidden_high_risk_exception_vs_prohibition",
+    "seed_data_dir": true,
+    "circulars": [],
+    "analyze_id": "BX-1005",
+    "expected": [
+      {
+        "source_clause_id": "BX-1005#4",
+        "target_clause_id": "BX-1007#1",
+        "relationship_type": "full_contradiction",
+        "winning_clause_id": "BX-1007#1",
+        "resolver_status": "resolved"
+      }
+    ]
+  },
+  {
+    "name": "compatible_overlap_not_conflict",
+    "circulars": [
+      {
+        "id": "GT-O1",
+        "title": "شرایط عمومی دسته‌چک",
+        "text": "بند 1) دسته‌چک به مشتریان دارای حساب فعال قابل ارائه است.",
+        "circular_type": "internal",
+        "issue_date": "1403/01/01",
+        "topic": "دسته‌چک"
+      },
+      {
+        "id": "GT-O2",
+        "title": "تأکید بر حساب فعال",
+        "text": "بند 1) ارائه دسته‌چک منوط به داشتن حساب فعال نزد بانک است.",
+        "circular_type": "internal",
+        "issue_date": "1403/06/01",
+        "topic": "دسته‌چک"
+      }
+    ],
+    "expected_absent_types": ["full_contradiction", "partial_contradiction"],
+    "expected": []
+  }
+]
