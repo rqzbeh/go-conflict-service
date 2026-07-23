@@ -1,11 +1,11 @@
 {
-  "correct": 7,
-  "expected": 7,
+  "correct": 9,
+  "expected": 9,
   "f1": 1,
   "false_negative": 0,
   "false_positive": 0,
   "precision": 1,
-  "predicted": 7,
+  "predicted": 9,
   "recall": 1,
   "scenarios": [
     {
@@ -45,9 +45,9 @@
       "pass": true
     },
     {
-      "name": "archive_hidden_high_risk_exception_vs_prohibition",
-      "expected": 1,
-      "found": 1,
+      "name": "challenge_archive_designed_high_risk_conflicts",
+      "expected": 3,
+      "found": 3,
       "pass": true
     },
     {
@@ -58,5 +58,5 @@
       "pass": true
     }
   ],
-  "true_positive": 7
+  "true_positive": 9
 }

@@ -90,10 +90,17 @@ func isCandidate(a, b Clause) bool {
 	if sameSubject(a, b) {
 		return true
 	}
+	// مجوز/ممنوعیت متضاد روی همان سطح ریسک در خانواده اعتباری (تعارض پنهان آرشیو).
+	if oppositeRulings(a.RulingType, b.RulingType) && sameRiskScope(a, b) &&
+		(sameProductFamily(a, b) || broadCredit(a) || broadCredit(b) || creditOrRisk(a) || creditOrRisk(b)) {
+		return true
+	}
 	if broadCredit(a) && creditOrRisk(b) || broadCredit(b) && creditOrRisk(a) {
 		return true
 	}
-	if embeddingScore(a.Embedding, b.Embedding) >= 0.42 && sameProductFamily(a, b) {
+	// فقط وقتی ابعاد embedding یکسان باشد امتیاز معتبر است.
+	if len(a.Embedding) > 0 && len(a.Embedding) == len(b.Embedding) &&
+		embeddingScore(a.Embedding, b.Embedding) >= 0.42 && sameProductFamily(a, b) {
 		return true
 	}
 	// آستانه مبلغ/ماه متفاوت با هم‌پوشانی معقول = کاندید تعارض جزئی
@@ -279,14 +286,32 @@ func thresholdConflict(a, b Clause) bool {
 	if amendmentTargetsOtherClause(a, b) || amendmentTargetsOtherClause(b, a) {
 		return false
 	}
+	// ماه/سال فقط روی subject یکسان (نه خانواده اعتباری عام) — وگرنه «۳ ماه وام» با «۶ ماه دسته‌چک» FP.
+	// مبلغ: subject یکسان یا هر دو صریحاً سقف روی همان خانواده محصول.
 	for _, key := range []string{"amount_toman", "months", "years"} {
 		av, aok := asInt(a.ExtractedConditions[key])
 		bv, bok := asInt(b.ExtractedConditions[key])
-		if aok && bok && av != bv {
-			return true
+		if !aok || !bok || av == bv {
+			continue
 		}
+		switch key {
+		case "months", "years":
+			if !sameSubject(a, b) {
+				continue
+			}
+		case "amount_toman":
+			if !sameSubject(a, b) && !(sameProductFamily(a, b) && bothMentionCeiling(a, b)) {
+				continue
+			}
+		}
+		return true
 	}
 	return false
+}
+
+func bothMentionCeiling(a, b Clause) bool {
+	return containsAny(a.NormalizedText, "سقف", "حداکثر", "مبلغ") &&
+		containsAny(b.NormalizedText, "سقف", "حداکثر", "مبلغ")
 }
 
 func asInt(v any) (int, bool) {

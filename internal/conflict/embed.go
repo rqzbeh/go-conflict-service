@@ -273,11 +273,12 @@ func EnrichCircularEmbeddings(c *Circular) {
 	}
 }
 
-// needsNeuralUpgrade is true when a clause still has the offline 128-d hashed vector
-// (or empty) while a neural client is available.
+// needsNeuralUpgrade is true when a clause lacks a full neural vector while a client is available.
+// Treats empty, local-128, truncated, or any non-neural size as needing upgrade.
 func needsNeuralUpgrade(cl Clause) bool {
 	n := len(cl.Embedding)
-	return n == 0 || n == embeddingSize
+	// gemini-embedding-001 is 3072-d; anything below 256 is local/truncated/corrupt.
+	return n < 256
 }
 
 // EnrichStoreEmbeddings upgrades any still-local clause vectors in the store (e.g. after

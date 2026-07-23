@@ -1,61 +1,86 @@
-# گزارش فنی سرویس Go
+# گزارش فنی سرویس Go (۱–۲ صفحه)
 
 ## معماری
 
 ```
-UI (React, RTL, فارسی)
+UI (React, RTL، فارسی)
         │
         ▼
    conflictd (Go HTTP)
    ├── Conflict Engine
-   │    ├── Parser / Feature Extraction
-   │    ├── Embedding سبک + Semantic Search
-   │    ├── Deterministic Classifier (+ optional LLM)
-   │    ├── Resolver (hierarchy + jalali date)
-   │    └── Store (memory / Postgres JSONB)
+   │    ├── Parser / Feature Extraction (بند، حکم، مبلغ، ماه، ارجاع)
+   │    ├── Embedding: neural gemini-embedding-001 (+ fallback hashed)
+   │    ├── Semantic Search (`GET /search`, isCandidate)
+   │    ├── Classifier قطعی (+ LLM اختیاری borderline / خلاصه)
+   │    ├── Resolver (نظارتی > داخلی، تاریخ جلالی، needs_review)
+   │    └── Store (حافظه / Postgres JSONB)
    └── Eligibility Assistant
         ├── Profile / Intake / Cold-start
-        ├── Matching Engine (deterministic)
-        ├── Rule extraction from circular text
+        ├── Matching Engine قطعی (هم‌تراز reference_engine)
+        ├── Rule extraction از متن بخشنامه
         ├── Offer / Explainer / Legal summary
-        └── Mock Identity/Financial/RBCI APIs
+        └── Mock Identity / Financial / RBCI
 ```
 
-## تصمیم‌های طراحی
+## استخراج بند و ویژگی
 
-- تصمیم‌های عددی و حقوقی قطعی‌اند. LLM فقط برای خلاصه‌سازی/بازبینی کمکی است و با guardrail نمی‌تواند تعارض قطعی را خنثی کند.
-- Embedding بدون سرویس خارجی برای بازیابی اولیه.
-- Eligibility ground truth رسمی (`eval/ground_truth.json` بسته چالش) معیار صحت Matching Engine است.
-- Conflict ground truth داخل `go-conflict-service/eval/ground_truth.json` برای Precision/Recall/F1.
+- تقسیم متن روی «بند N)»
+- `RulingType`: permission / prohibition / obligation / exception / amendment
+- شرایط: ریسک، ضامن، وثیقه، ماه/سال، `amount_toman` (ریال÷۱۰، میلیون/میلیارد، واژه‌عدد)
+- ارجاع: `بخشنامه X` و شناسه‌های BX/GT
 
-## پایداری داده
+## Embedding / Semantic Search
 
-- بدون `DATABASE_URL`: حافظه + اختیاری `STATE_PATH`
-- با `DATABASE_URL`: Postgres و ذخیره وضعیت در JSONB
-- seed بخشنامه‌ها از `DATA_DIR/circulars*` در استارتاپ
+1. **پیش‌فرض عملیاتی:** `POST {OPENAI_BASE_URL}/embeddings` با مدل
+   `gemini-embedding-001` (۳۰۷۲ بعدی). مدل chat (`ag/...`) embeddings ندارد.
+2. **Fallback آفلاین:** hashed bag-of-tokens + synonym + char 3-gram (۱۲۸ بعدی).
+3. استارتاپ: `EnrichStoreEmbeddings` بردارهای قدیمی ۱۲۸ بعدی را در صورت وجود API ارتقا می‌دهد.
+4. جست‌وجو: ترکیب cosine embedding + lexical overlap.
 
-## امنیت عملیاتی
+## تشخیص تعارض
 
-- کلید LLM فقط از env
-- JSON decoder با `DisallowUnknownFields`
-- محدودیت اندازه body
-- عدم افشای API key در `/health`
+انواع: `full_contradiction` | `partial_contradiction` | `overlap_without_conflict` | `supersession` | `neutral`.
 
-## اجرا و استقرار
+- نسخ صریح/جزئی: «بند N بخشنامه X» فقط همان بند N (`referencedClauseNumber` + `amendmentTargetsOtherClause`)
+- آستانه ماه/سال فقط روی **subject یکسان** (جلوگیری از FP بین دسته‌چک و وام)
+- مبلغ: subject یکسان یا سقف هم‌خانواده
+- `LLM_CLASSIFY=0` پیش‌فرض: classify قطعی در Analyze/Scan (پایدار و سریع)
+- LLM chat: `plain_language_summary` و deep-review با guardrail (نمی‌تواند تعارض قطعی را خنثی کند)
 
-- Compose: `compose.go-conflict.yml`
-- سرویس: `go-conflict` روی `:8080` و publish `18080`
-- مسیر VPS: `/opt/circular-conflict`
-- Health: `GET /health`
+## اولویّت‌بندی (Resolver)
 
-## نتایج تست (محلی)
+1. سطح سلسله‌مراتب: supervisory > internal  
+2. تاریخ صدور جلالی جدیدتر  
+3. هم‌سطح + هم‌تاریخ → `needs_review` (تصمیم انسانی)
 
-- `go test ./...` ✅ (۵۷)
-- `evalconflict` روی ۸ سناریوی PDF: F1 = **1.0** (۷ TP / ۰ FP / ۰ FN) ✅
-- ground truth ۵۴ زوج eligibility ✅
-- cold-start BX-1008 student/small_credit/age28 → score **۵۸** medium ✅
+## پایداری و استقرار
 
-## رفع باگ اخیر
+- `DATABASE_URL` → Postgres JSONB؛ وگرنه `STATE_PATH` یا حافظه
+- seed از `DATA_DIR/circulars*`
+- Compose: `compose.go-conflict.yml` → host `18080`
+- VPS: `http://nl-main.z3df1lter.uk:18080/` مسیر `/opt/circular-conflict`
 
-- اصلاح «بند N بخشنامه X» دیگر با بندهای غیرهدف همان بخشنامه `partial_contradiction` مبلغی تولید نمی‌کند.
-- `isCandidate` / `thresholdConflict` / `sameScope` از `amendmentTargetsOtherClause` عبور می‌کنند.
+## نتایج ارزیابی (بازتولیدپذیر)
+
+| آزمون | نتیجه |
+|---|---|
+| `go test ./internal/conflict` | پاس (۵۲ تست آفلاین) |
+| `cmd/evalconflict` — ۸ سناریو / ۹ زوج | Precision=Recall=F1=**1.0** |
+| eligibility `run_eval.py` | **۵۴/۵۴** decision + evidence؛ gap 20/20 |
+| cold-start student/small_credit/age28 | score **۵۸** medium |
+| `/health` embeddings | `openai_compatible_neural` / `gemini-embedding-001` |
+
+سناریوهای PDF در GT: نظارتی>داخلی، سقف جدیدتر، ماه جدیدتر، هم‌تاریخ needs_review،
+اصلاح جزئی بند ۲، لغو BX، سه تعارض طراحی‌شده آرشیو BX-1005 با BX-1007/1002/1003،
+هم‌پوشانی سازگار بدون تعارض.
+
+## GT تعارض
+
+کمیته در بسته چالش GT رسمی زوج‌های تعارض منتشر نکرده؛
+`go-conflict-service/eval/ground_truth.json` از سناریوهای متن PDF + تعارض‌های
+طراحی‌شده در بخشنامه‌های مصنوعی BX ساخته شده است. GT رسمی eligibility همان
+`eval/ground_truth.json` بسته چالش است (۵۴ زوج).
+
+## تحویل ویدیو
+
+ویدیوی دمو طبق درخواست صریح کاربر **صرف‌نظر** شده و جزء تحویل نیست.

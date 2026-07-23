@@ -73,9 +73,6 @@ func SeedFromDataDir(store *Store, dataDir string) error {
 		return err
 	}
 	for _, item := range items {
-		if store.HasCircular(item.CircularID) {
-			continue
-		}
 		raw, err := os.ReadFile(filepath.Join(dataDir, item.File))
 		if err != nil {
 			return err
@@ -89,6 +86,8 @@ func SeedFromDataDir(store *Store, dataDir string) error {
 			IssueDate:    item.IssueDate,
 			Topic:        item.Title,
 		}
+		// Always re-parse seed circulars so Postgres upgrades pick up parser/feature fixes.
+		// UpsertCircular clears stale analysis only when content actually changes.
 		store.UpsertCircular(ParseCircular(req))
 	}
 	return nil

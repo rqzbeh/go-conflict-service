@@ -257,7 +257,10 @@ func classifyDeterministic(a, b Clause) llmResult {
 	if exceptionAgainstProhibition(a, b) {
 		return llmResult{"partial_contradiction", 0.78, "یک بند ممنوعیت کلی دارد و بند دیگر برای همان موضوع استثنا یا مجوز ذکر می‌کند."}
 	}
-	if oppositeRulings(a.RulingType, b.RulingType) && sameScope(a, b) && sameRiskScope(a, b) {
+	// Full contradiction: opposite rulings on shared scope, OR credit-risk family
+	// opposite rulings (same risk) even when subjects differ (e.g. broad credit vs loan).
+	if oppositeRulings(a.RulingType, b.RulingType) && sameRiskScope(a, b) &&
+		(sameScope(a, b) || creditRiskConflictScope(a, b)) {
 		return llmResult{"full_contradiction", 0.82, "نوع حکم دو بند برای موضوع مشترک ناسازگار است."}
 	}
 	if thresholdConflict(a, b) && sameScope(a, b) {
@@ -267,6 +270,12 @@ func classifyDeterministic(a, b Clause) llmResult {
 		return llmResult{"overlap_without_conflict", 0.62, "دو بند موضوع مشترک دارند اما ناسازگاری صریحی پیدا نشد."}
 	}
 	return llmResult{"neutral", 0.2, "ارتباط مؤثر یافت نشد."}
+}
+
+// creditRiskConflictScope mirrors isCandidate's opposite+risk path so classify
+// does not drop archive pairs that already passed candidate selection.
+func creditRiskConflictScope(a, b Clause) bool {
+	return sameProductFamily(a, b) || broadCredit(a) || broadCredit(b) || creditOrRisk(a) || creditOrRisk(b)
 }
 
 func chooseClassification(fallback, got llmResult) llmResult {

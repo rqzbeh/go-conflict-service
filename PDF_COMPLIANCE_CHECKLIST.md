@@ -1,70 +1,59 @@
 # چک‌لیست انطباق با PDF (Circular Conflict)
 
-متن PDF به `EligibilityAssistant&IntelligentBankingOffer.md` تبدیل شده و خط‌به‌خط
-با پیاده‌سازی Go تطبیق داده شده است.
+منبع: `EligibilityAssistant&IntelligentBankingOffer.md` (تبدیل PDF).
 
-| الزام PDF | وضعیت | محل پیاده‌سازی |
+| الزام PDF | وضعیت | محل |
 |---|---|---|
 | ثبت بخشنامه جدید | ✅ | `POST /circulars` |
 | Parsing/Chunking بندها | ✅ | `ExtractClauses`, `ParseCircular` |
 | ابرداده نوع/واحد/تاریخ/موضوع | ✅ | مدل `Circular` |
-| Semantic/Embedding search | ✅ | `BuildEmbedding` + `SearchClauses` + `isCandidate` |
+| Embedding / Semantic Search | ✅ | neural `gemini-embedding-001` + `SearchClauses`؛ fallback hashed |
 | مقایسه بندبه‌بند | ✅ | `Analyze` / `ScanArchive` |
 | تعارض کامل | ✅ | `full_contradiction` |
-| تعارض جزئی | ✅ | `partial_contradiction` (سقف/آستانه/استثنا) |
+| تعارض جزئی | ✅ | `partial_contradiction` |
 | هم‌پوشانی بدون تعارض | ✅ | `overlap_without_conflict` |
-| نسخ (Supersede) | ✅ | `supersession` + ارجاع صریح `BX-...` |
-| تقدم بالادستی/نظارتی | ✅ | `resolve` با `HierarchyLevel` |
-| تقدم تاریخ صدور | ✅ | `issueDateAfter` / Jalali |
-| ابهام هم‌سطح هم‌تاریخ | ✅ | `needs_review` |
-| evidence دقیق متن دو بند | ✅ | `evidence_json` + `GET .../clauses/{n}` |
-| اسکن آرشیو برای تعارض پنهان | ✅ | `POST /scans/archive` |
-| UI حقوقی/تطبیق | ✅ | UI فارسی RTL |
-| مستندسازی و کد | ✅ | README + docs فارسی |
-| تست ورودی/خروجی | ✅ | parser/analyzer/server/eval |
-| Bonus: خلاصه ساده LLM برای حقوقی | ✅ | `plain_language_summary` |
-| Precision/Recall/F1 | ✅ | `cmd/evalconflict` روی `eval/ground_truth.json` |
-| Docker | ✅ | `Dockerfile` + `compose.go-conflict.yml` |
-| پایداری Postgres | ✅ | `DATABASE_URL` + JSONB state |
-| اسکن زمان‌بندی‌شده | ✅ | `SCAN_INTERVAL_SECONDS` |
+| نسخ (Supersede) | ✅ | `supersession` + ارجاع بند/شناسه |
+| تقدم نظارتی بر داخلی | ✅ | `resolve` / `HierarchyLevel` |
+| تقدم تاریخ صدور | ✅ | `issueDateAfter` (جلالی) |
+| هم‌سطح هم‌تاریخ → ابهام | ✅ | `needs_review` |
+| evidence متن دو بند | ✅ | `evidence` + `GET .../clauses/{n}` |
+| اسکن دوره‌ای آرشیو | ✅ | `POST /scans/archive` + scheduler |
+| UI حقوقی/تطبیق | ✅ | React RTL فارسی |
+| Dockerfile | ✅ | `Dockerfile` + compose |
+| README + روش تشخیص | ✅ | README + TECHNICAL_REPORT |
+| Precision / Recall / F1 | ✅ | `cmd/evalconflict` → F1=1.0 (۹ TP) |
+| گزارش کوتاه روش | ✅ | TECHNICAL_REPORT / FINAL_REPORT_FA |
+| Bonus خلاصه ساده LLM | ✅ | `plain_language_summary` / `legal_summary` |
+| ویدیوی دمو (≥۲ سناریو) | ⏭ صرف‌نظر | درخواست صریح کاربر |
 
-## یافته‌های منطقی که اصلاح شد
+## سناریوهای نمونه PDF
 
-1. **پورت اشتباه روی VPS**: کانتینر قبلی `18080->8501` و HTML اپ دیگر سرو می‌کرد؛ compose به `18080:8080` اصلاح شد.
-2. **Volume state فقط‌خواندنی** بود؛ برای persistence نوشتنی شد.
-3. **DATA_DIR داخل image** بیک‌این شد تا بدون mount چالش هم سرویس بالا بیاید.
-4. **استثنای محصول پایه** (سپرده/قرض‌الحسنه) دیگر به‌اشتباه با ممنوعیت اعتباری بالادستی هم‌خانواده نمی‌شود.
-5. **alias قرارداد OpenAPI** برای `risk.level/score` اضافه شد.
-6. **استخراج قواعد از متن بخشنامه** در `/eligibility/rules` پیاده شد.
-7. **استخراج مبلغ** (ریال/تومان/میلیون/میلیارد/واژه‌عدد) برای تعارض سقف.
-8. **اصلاح جزئی «بند N بخشنامه X»** فقط همان بند N را نسخ می‌کند (`referencedClauseNumber` + `amendmentTargetsOtherClause`) تا FP با بندهای هم‌بخشنامه ایجاد نشود.
-9. **طبقه‌بندی پیش‌فرض قطعی** (`LLM_CLASSIFY=0`)؛ LLM اختیاری برای borderline/خلاصه.
-
-## ارزیابی تعارض (۸ سناریوی PDF)
-
-`go run ./cmd/evalconflict eval/ground_truth.json` → Precision/Recall/F1 = **1.0** (۷ TP، ۰ FP/FN).
-
-| سناریو | انتظار |
+| سناریو | پوشش |
 |---|---|
-| نظارتی > داخلی | full_contradiction، win=supervisory |
-| سقف جدیدتر | partial_contradiction |
-| آستانه ماه جدیدتر | partial_contradiction |
-| هم‌سطح هم‌تاریخ | needs_review |
-| اصلاح جزئی بند ۲ | supersession فقط روی #2 |
-| لغو صریح BX | supersession |
-| تعارض پنهان آرشیو BX-1005/1007 | full_contradiction |
-| هم‌پوشانی سازگار | بدون تعارض |
+| سقف داخلی جدیدتر vs قدیمی | `pdf_newer_ceiling_change` |
+| داخلی vs نظارتی | `pdf_supervisory_over_internal` |
+| دو واحد، شرایط متفاوت دسته‌چک | `pdf_same_date_different_units_needs_review` |
+| اصلاح جزئی فقط بخشی از بخشنامه | `pdf_partial_supersession_amendment` |
+| تعارض پنهان آرشیو | `challenge_archive_designed_high_risk_conflicts` (BX-1005×1007/1002/1003) |
 
-## محدودیت‌های صادقانه
+## یافته‌های اصلاح‌شده
 
-- **Embedding عصبی پیش‌فرض روشن** وقتی `OPENAI_BASE_URL`+`OPENAI_API_KEY` هست: مدل `gemini-embedding-001` (۳۰۷۲ بعدی) از همان endpoint سازگار با OpenAI. Fallback محلی hashed فقط اگر API خاموش/خراب باشد (`OPENAI_EMBEDDING=0`).
-- مدل chat (`ag/gemini-3.6-flash-high`) برای embeddings پشتیبانی نمی‌شود؛ جدا از مدل embedding است.
-- طبقه‌بندی تعارض جفت‌به‌جفت پیش‌فرض **قطعی** است (`LLM_CLASSIFY=0`) تا Analyze هنگ نکند؛ chat LLM برای خلاصه/deep-review.
-- ویدیوی دمو طبق درخواست کاربر حذف/صرف‌نظر شده است.
-- GT تعارض کمیته رسمی ندارد؛ GT داخلی بر اساس سناریوهای PDF ساخته شده.
+1. پورت VPS `18080:8080` (قبلاً اشتباه به 8501)
+2. volume state نوشتنی + Postgres
+3. استخراج مبلغ ریال/تومان/میلیون/میلیارد
+4. اصلاح «بند N بخشنامه X» فقط بند N
+5. آستانه ماه فقط روی subject یکسان (بدون FP بین محصولات مختلف)
+6. embedding عصبی روی gateway کاربر؛ classify جفت‌بند قطعی پیش‌فرض
+7. alias OpenAPI `risk.level` / `risk.score`
+8. eligibility ۵۴/۵۴ + cold-start ۵۸
 
-## دامنه دوم PDF/بسته (Eligibility)
+## محدودیت‌های صادقانه (هم‌راستا در همه docs)
 
-با اینکه عنوان PDF اصلی «تعارض بخشنامه» است، بسته همراه چالش Eligibility را هم
-الزام کرده. هر دو در همین سرویس پوشش داده شده‌اند؛ جزئیات Eligibility در
-`ELIGIBILITY_ASSISTANT_FA.md`.
+- **ویدیو:** انجام نشده (waived).
+- **GT تعارض کمیته:** در بسته چالش منتشر نشده؛ GT داخلی بر اساس PDF + بخشنامه‌های BX.
+- **Classify جفت‌بند:** پیش‌فرض قطعی (`LLM_CLASSIFY=0`)؛ chat LLM برای خلاصه/deep-review.
+- **Embedding chat model:** `ag/gemini-3.6-flash-high` embeddings ندارد؛ از `gemini-embedding-001` استفاده می‌شود.
+
+## دامنه دوم (Eligibility)
+
+بسته چالش eligibility را هم الزام کرده → `ELIGIBILITY_ASSISTANT_FA.md` و `POST /assist`.

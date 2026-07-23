@@ -186,7 +186,7 @@
     ]
   },
   {
-    "name": "archive_hidden_high_risk_exception_vs_prohibition",
+    "name": "challenge_archive_designed_high_risk_conflicts",
     "seed_data_dir": true,
     "circulars": [],
     "analyze_id": "BX-1005",
@@ -196,6 +196,20 @@
         "target_clause_id": "BX-1007#1",
         "relationship_type": "full_contradiction",
         "winning_clause_id": "BX-1007#1",
+        "resolver_status": "resolved"
+      },
+      {
+        "source_clause_id": "BX-1005#4",
+        "target_clause_id": "BX-1002#4",
+        "relationship_type": "full_contradiction",
+        "winning_clause_id": "BX-1002#4",
+        "resolver_status": "resolved"
+      },
+      {
+        "source_clause_id": "BX-1005#4",
+        "target_clause_id": "BX-1003#4",
+        "relationship_type": "full_contradiction",
+        "winning_clause_id": "BX-1003#4",
         "resolver_status": "resolved"
       }
     ]
@@ -220,7 +234,10 @@
         "topic": "دسته‌چک"
       }
     ],
-    "expected_absent_types": ["full_contradiction", "partial_contradiction"],
+    "expected_absent_types": [
+      "full_contradiction",
+      "partial_contradiction"
+    ],
     "expected": []
   }
 ]

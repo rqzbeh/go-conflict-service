@@ -1,43 +1,82 @@
-# Deployment Report
+# گزارش استقرار
 
-## Target
+## هدف
 
-- Host: `nl-main.z3df1lter.uk`
-- User: `root`
-- Deploy path: `/opt/circular-conflict`
-- Compose file: `/opt/circular-conflict/compose.go-conflict.yml`
-- Public URL: `http://nl-main.z3df1lter.uk:18080/`
+| مورد | مقدار |
+|---|---|
+| Host | `nl-main.z3df1lter.uk` |
+| User | `root` |
+| مسیر | `/opt/circular-conflict` |
+| Compose | `compose.go-conflict.yml` |
+| URL عمومی | `http://nl-main.z3df1lter.uk:18080/` |
 
-Port `8080` was already used by `warehouse-routing-api-1`, so this service is published on host port `18080`.
+پورت host `8080` قبلاً توسط سرویس دیگر اشغال بود → publish روی **18080**.
 
-## Commands Used
+## استقرار سریع
 
 ```bash
-docker compose -f compose.go-conflict.yml up -d --build
-curl -fsS http://localhost:18080/health
+# از ریشه مخزن (نه داخل image تست/npm)
+bash scripts/fast-deploy.sh
 ```
 
-The Docker build ran `go test ./...` inside the image build and passed.
+مراحل: تست محلی کوتاه → tar slim روی SSH → `docker compose build` با BuildKit cache
+→ health ≤۴۰s → smoke cold-start.
 
-## Remote Verification
+`Dockerfile` فقط باینری Go + UI prebuilt می‌سازد (بدون `go test`/`npm` داخل image).
 
-The deployed API passed these checks on the VPS:
+## env عملیاتی (نمونه)
 
-- `GET /health` returned the service name and seeded circular count.
-- `GET /health` confirmed LLM is enabled with model `ag/gemini-3.6-flash-high`.
-- `GET /circulars` returned 8 seeded circulars.
-- `POST /circulars` accepted a test circular.
-- `POST /circulars/T-REMOTE/analyze` found a high-risk checkbook contradiction.
-- The contradiction resolved to `BX-1007#1`, the superior supervisory clause.
-- `GET /circulars/T-REMOTE/clauses/1` returned exact clause evidence.
-- `POST /scans/archive` returned an archive report.
-- A real OpenAI-compatible API integration test against `https://nl-main.z3df1lter.uk/v1` passed with model `ag/gemini-3.6-flash-high`.
-- A deployed LLM-backed API analysis found the expected high-risk checkbook contradiction and included an `LLM:` rationale in the report.
-- The bonus LLM summary path was tested against the real endpoint and returns plain-language items for legal/compliance users.
-- Archive scan latency was fixed by keeping clause-pair comparison deterministic during full-archive scans and using LLM only once for the final legal/compliance summary. Remote `/scans/archive` completed in about 3 seconds after the fix.
+```
+OPENAI_BASE_URL=https://nl-main.z3df1lter.uk/v1
+OPENAI_API_KEY=***
+OPENAI_MODEL=ag/gemini-3.6-flash-high
+OPENAI_TIMEOUT_SECONDS=20
+OPENAI_EMBEDDING=1
+OPENAI_EMBEDDING_MODEL=gemini-embedding-001
+OPENAI_EMBEDDING_TIMEOUT_SECONDS=12
+LLM_CLASSIFY=0
+```
 
-After verification, the container was restarted to clear the in-memory test circular. Final public health check:
+## تأیید روی VPS (آخرین دور)
+
+| بررسی | نتیجه |
+|---|---|
+| `GET /health` | `status=ok`، persistence، eligibility |
+| embeddings | `backend=openai_compatible_neural`, `model=gemini-embedding-001` |
+| llm | enabled، مدل chat بالا |
+| circulars seed | ≥۸ بخشنامه BX (+ موارد تست) |
+| cold-start `/assist` | risk_score=**۵۸**, medium |
+| eligibility `run_eval.py` | **۵۴/۵۴** decision/evidence، gap 20/20 |
+| conflict `evalconflict` | F1=**1.0** (۹ TP) |
+| analyze: supersession جزئی بند ۲ | فقط هدف `#2` |
+| analyze: نظارتی vs داخلی | full_contradiction، win=supervisory |
+| analyze: سقف جدیدتر | partial_contradiction، win=newer |
+| analyze: هم‌تاریخ دو واحد | needs_review |
+| archive scan | تعارض‌های طراحی‌شده BX-1005 با 1007/1002/1003 |
+
+نمونه health (شکل؛ تعداد circulars متغیر است):
 
 ```json
-{"circulars":8,"llm":{"base_url":"https://nl-main.z3df1lter.uk/v1","enabled":true,"model":"ag/gemini-3.6-flash-high"},"service":"go-conflict-service","status":"ok"}
+{
+  "status": "ok",
+  "service": "go-conflict-service",
+  "embeddings": {
+    "enabled": true,
+    "backend": "openai_compatible_neural",
+    "model": "gemini-embedding-001",
+    "base_url": "https://nl-main.z3df1lter.uk/v1"
+  },
+  "llm": {
+    "enabled": true,
+    "model": "ag/gemini-3.6-flash-high",
+    "base_url": "https://nl-main.z3df1lter.uk/v1"
+  },
+  "eligibility": {"enabled": true},
+  "persistence": {"enabled": true}
+}
 ```
+
+## مخازن
+
+- GitHub (public): https://github.com/rqzbeh/go-conflict-service
+- Sharif GitLab (private): https://git.sharifict.com/rqzbeh/go-conflict-service

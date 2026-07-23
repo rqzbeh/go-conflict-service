@@ -10,8 +10,8 @@ type SearchResult struct {
 	Score  float64 `json:"score"`
 }
 
-// SearchClauses finds topically related clauses via local embedding + lexical
-// overlap (PDF: Embedding/Semantic Search). No external model required.
+// SearchClauses finds topically related clauses via neural embeddings when
+// configured (OPENAI_* + gemini-embedding-001), else local hashed vectors + lexical overlap.
 func SearchClauses(store *Store, query string, limit int) []SearchResult {
 	qnorm := NormalizePersian(query)
 	qvec := BuildEmbedding(qnorm)
