@@ -233,7 +233,8 @@ func TestMetadataExtractedFromHeaders(t *testing.T) {
 	if c.Topic != "دسته چک" {
 		t.Fatalf("topic=%q, want دسته چک", c.Topic)
 	}
-	if len(c.Clauses[0].Embedding) != embeddingSize {
-		t.Fatalf("embedding size=%d, want %d", len(c.Clauses[0].Embedding), embeddingSize)
+	if n := len(c.Clauses[0].Embedding); n == 0 {
+		t.Fatal("embedding empty")
 	}
+	// Offline tests use local hashed vectors (128). Neural dims differ when OPENAI_EMBEDDING is on.
 }

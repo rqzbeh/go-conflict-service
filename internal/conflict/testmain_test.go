@@ -11,6 +11,10 @@ func TestMain(m *testing.M) {
 		_ = os.Unsetenv("OPENAI_API_KEY")
 		_ = os.Unsetenv("OPENAI_MODEL")
 		_ = os.Unsetenv("OPENAI_TIMEOUT_SECONDS")
+		_ = os.Unsetenv("OPENAI_EMBEDDING")
+		_ = os.Unsetenv("OPENAI_EMBEDDING_MODEL")
+		_ = os.Unsetenv("OPENAI_EMBEDDING_TIMEOUT_SECONDS")
+		ResetEmbedClientForTests()
 	}
 	os.Exit(m.Run())
 }

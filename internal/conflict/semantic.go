@@ -1,6 +1,7 @@
 package conflict
 
 import (
+	"context"
 	"hash/fnv"
 	"math"
 	"strings"
@@ -59,11 +60,24 @@ func appendUnique(xs []string, v string) []string {
 	return append(xs, v)
 }
 
-// BuildEmbedding builds a local hashed bag-of-tokens vector with synonym expansion.
+// BuildEmbedding returns a semantic vector for text.
 //
-// This is not a neural embedding; it satisfies the PDF retrieval step offline and
-// deterministically. Optional external embeddings can replace it later.
+// Prefer neural embeddings from the OpenAI-compatible endpoint
+// (OPENAI_EMBEDDING_MODEL, default gemini-embedding-001) when configured;
+// fall back to local hashed bag-of-tokens + synonym expansion offline.
 func BuildEmbedding(text string) []float64 {
+	if c := getEmbedClient(); c != nil {
+		ctx, cancel := context.WithTimeout(context.Background(), defaultEmbedTimeout)
+		defer cancel()
+		if vec, err := c.EmbedOne(ctx, text); err == nil && len(vec) > 0 {
+			return vec
+		}
+	}
+	return buildLocalEmbedding(text)
+}
+
+// buildLocalEmbedding is the offline deterministic fallback (hashed + synonyms).
+func buildLocalEmbedding(text string) []float64 {
 	vec := make([]float64, embeddingSize)
 	for token, w := range weightedTokens(text) {
 		addToken(vec, token, w)

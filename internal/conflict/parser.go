@@ -119,6 +119,8 @@ func ParseCircular(req CircularRequest) Circular {
 	if c.Topic == "" {
 		c.Topic = inferTopic(c)
 	}
+	// Neural embeddings when OPENAI_* configured; keeps local vectors on failure/offline.
+	EnrichCircularEmbeddings(&c)
 	return c
 }
 
@@ -160,7 +162,8 @@ func buildClause(c Circular, number, text string) Clause {
 		RulingType:            rulingType(norm),
 		ExtractedConditions:   conditions(norm),
 		ReferencedCircularIDs: refs(norm),
-		Embedding:             BuildEmbedding(norm),
+		// Local vector first (fast/offline); EnrichCircularEmbeddings upgrades to neural in batch.
+		Embedding: buildLocalEmbedding(norm),
 	}
 }
 

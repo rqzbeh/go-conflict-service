@@ -61,10 +61,11 @@ func (s *Server) home(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) health(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{
-		"status":    "ok",
-		"service":   "go-conflict-service",
-		"circulars": s.store.CircularCount(),
-		"llm":       LLMRuntimeStatus(),
+		"status":     "ok",
+		"service":    "go-conflict-service",
+		"circulars":  s.store.CircularCount(),
+		"llm":        LLMRuntimeStatus(),
+		"embeddings": EmbeddingRuntimeStatus(),
 		"persistence": map[string]any{
 			"enabled": s.store.Persistent(),
 		},

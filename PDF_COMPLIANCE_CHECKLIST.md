@@ -57,7 +57,9 @@
 
 ## محدودیت‌های صادقانه
 
-- Embedding محلی hashed + synonym است، نه مدل عصبی خارجی.
+- **Embedding عصبی پیش‌فرض روشن** وقتی `OPENAI_BASE_URL`+`OPENAI_API_KEY` هست: مدل `gemini-embedding-001` (۳۰۷۲ بعدی) از همان endpoint سازگار با OpenAI. Fallback محلی hashed فقط اگر API خاموش/خراب باشد (`OPENAI_EMBEDDING=0`).
+- مدل chat (`ag/gemini-3.6-flash-high`) برای embeddings پشتیبانی نمی‌شود؛ جدا از مدل embedding است.
+- طبقه‌بندی تعارض جفت‌به‌جفت پیش‌فرض **قطعی** است (`LLM_CLASSIFY=0`) تا Analyze هنگ نکند؛ chat LLM برای خلاصه/deep-review.
 - ویدیوی دمو طبق درخواست کاربر حذف/صرف‌نظر شده است.
 - GT تعارض کمیته رسمی ندارد؛ GT داخلی بر اساس سناریوهای PDF ساخته شده.
 
